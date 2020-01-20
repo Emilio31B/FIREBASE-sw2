@@ -2,12 +2,14 @@ const { Router } = require('express');
 const router = Router();
 const admin = require('firebase-admin');
 
+var serviceAccount = require("../../sw2-construction-firebase-adminsdk-44x1w-7f85ada6d1");
+
 
 admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+    credential: admin.credential.cert(serviceAccount),
     databaseURL: 'https://sw2-construction.firebaseio.com/'
 });
-//38:21
+
 
 const db = admin.database();
 
