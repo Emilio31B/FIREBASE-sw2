@@ -34,8 +34,13 @@ router.post('/newUser', (req, res) => {
         password: req.body.password
     };
     db.ref('users').push(newUser);
-    res.send('Nuevo usuario creado');
+    //res.send('Nuevo usuario creado');
+    res.render('signIn');
 });
+
+router.get('/principal', (req,res => {
+    res.render('principal');
+}));
 
 module.exports = router;
 
