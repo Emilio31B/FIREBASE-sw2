@@ -38,13 +38,13 @@ router.post('/newUser', (req, res) => {
     res.render('signIn');
 });
 
-router.get('/principal', (req,res => {
+/*router.get('/principal', (req,res => {
     db.ref('houses').once('value', (snapshot) => {
         const data = snapshot.val();
         res.render('principal',{houses: data});
     })
     
-}));
+}));*/
 
 module.exports = router;
 
