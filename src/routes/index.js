@@ -13,6 +13,10 @@ admin.initializeApp({
 
 const db = admin.database();
 
+//-------------
+//var dbref = db.ref('users');
+//-------------
+
 router.get('/',(req,res) => {
     res.render('index');
 });
@@ -22,8 +26,23 @@ router.get('/signIn',(req,res) =>{
 });
 
 router.post('/validate', (req ,res) => {
-    console.log(res.body);
-    res.send("validado");
+    const username = req.body.username;
+    const password = req.body.password;
+    
+    let myref = db.ref('users');
+    let queryRef = myref.equalTo('username',username);
+
+    if(queryRef == true){
+        console.log(queryRef);
+        if(queryRef.password == password){
+            res.render('principal');
+        }else{
+            res.redirect('signIn');
+        }
+    }else{
+        res.redirect('signIn');
+    }
+    
 });
 //---------------------------------------
 

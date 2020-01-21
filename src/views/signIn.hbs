@@ -4,7 +4,7 @@
             <h1>SmartHome</h1>
         </div>
         <div class="card-body">
-            <form action="">
+            <form action="/validate" method="POST">
                 <div class="form-group">
                     <input type="text" name="username" placeholder="Usuario" class="form-control" autofocus>
                 </div>
@@ -12,10 +12,9 @@
                 <div class="form-group">
                     <input type="password" name="password" placeholder="Contraseña" class="form-control">
                 </div>
-                <button class="btn btn-primary btn-block">Iniciar Sesión</button>
-
-                <p>¿No tiene una cuenta? <a href="/signUp">Regístrese aquí</a></p>
+                <button class="btn btn-primary btn-block">Iniciar Sesión</button>               
             </form>
+            <p>¿No tiene una cuenta? <a href="/signUp">Regístrese aquí</a></p>
         </div>
     </div>
 </div>
