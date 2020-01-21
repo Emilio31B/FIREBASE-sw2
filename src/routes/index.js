@@ -39,7 +39,11 @@ router.post('/newUser', (req, res) => {
 });
 
 router.get('/principal', (req,res => {
-    res.render('principal');
+    db.ref('houses').once('value', (snapshot) => {
+        const data = snapshot.val();
+        res.render('principal',{houses: data});
+    })
+    
 }));
 
 module.exports = router;
