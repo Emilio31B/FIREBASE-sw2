@@ -21,6 +21,12 @@ router.get('/signIn',(req,res) =>{
     res.render('signIn');;
 });
 
+router.post('/validate', (req ,res) => {
+    console.log(res.body);
+    res.send("validado");
+});
+//---------------------------------------
+
 router.get('/signUp',(req,res) => {
     res.render('signUp');
 })
