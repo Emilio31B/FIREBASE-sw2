@@ -1,6 +1,20 @@
 const { Router } = require('express');
 const router = Router();
 const firebase = require('firebase-admin');
+//-----------------------------------------------
+const admin = require('firebase-admin');
+
+var serviceAccount = require("../../firestore-sw2-firebase-adminsdk-vidyq-f6edb114a6");
+
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: 'https://firestore-sw2.firebaseio.com'
+});
+
+
+const db = admin.firestore();
+//-----------------------------------------------
 //const admin = require('firebase-admin');
 
 //var serviceAccount = require("../../sw2-construction-firebase-adminsdk-44x1w-7f85ada6d1");
@@ -15,7 +29,7 @@ const firebase = require('firebase-admin');
 //const db = admin.database();
 
 //--------------------------------------------------
-var firebaseConfig = {
+/*var firebaseConfig = {
     apiKey: "AIzaSyCUCAqisxZali_WVMZphozhj692kMP33To",
     authDomain: "firestore-sw2.firebaseapp.com",
     databaseURL: "https://firestore-sw2.firebaseio.com",
@@ -23,11 +37,23 @@ var firebaseConfig = {
     storageBucket: "firestore-sw2.appspot.com",
     messagingSenderId: "345449013099",
     appId: "1:345449013099:web:db73a78a5b21bfa6f5f62e"
-};
+};*/
 
-firebase.initializeApp(firebaseConfig);
+//var  serviceAccount = require("../../firestore-sw2-firebase-adminsdk-vidyq-f6edb114a6.json");
+/*var firebaseConfig = {
+    //credential: admin.credential.cert(serviceAccount),
+    apiKey: "AIzaSyCUCAqisxZali_WVMZphozhj692kMP33To",
+    authDomain: "firestore-sw2.firebaseapp.com",
+    databaseURL: "https://firestore-sw2.firebaseio.com",
+    projectId: "firestore-sw2",
+    storageBucket: "firestore-sw2.appspot.com",
+    messagingSenderId: "345449013099",
+    appId: "1:345449013099:web:db73a78a5b21bfa6f5f62e"
+};*/
+
+/*firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-db.settings({timestampsInSnapshots : true});
+db.settings({timestampsInSnapshots : true});*/
 //--------------------------------------------------
 
 
@@ -43,7 +69,7 @@ router.post('/validate', (req ,res) => {
     const username = req.body.username;
     const password = req.body.password;
     db.collection('users').get().then((snapshot) => {
-
+        
     });
     
     /*let myref = db.ref('users');
