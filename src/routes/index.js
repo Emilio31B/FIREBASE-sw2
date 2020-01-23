@@ -98,7 +98,7 @@ router.post('/addHome', (req,res) => {
         owner: usernameGlobal
     };
     db.collection('houses').add(newHome);
-    res.render('principal');   
+    res.redirect('/principal');   
 });
 
 module.exports = router;
