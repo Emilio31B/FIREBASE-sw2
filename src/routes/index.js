@@ -101,5 +101,17 @@ router.post('/addHome', (req,res) => {
     res.redirect('/principal');   
 });
 
+
+
+
+//-------
+
+router.get('/logOut', (req, res) => {
+    res.render('signIn');
+});
+
+
+//-------
+
 module.exports = router;
 
