@@ -66,14 +66,23 @@ router.post('/newUser', (req, res) => {
 
 //--------
 router.get('/principal', (req, res) => {
-    var listhomes = db.collection('houses').where('owner','==',usernameGlobal).get().then((snapshot) => {
-        snapshot.docs.forEach(doc => {
-            console.log('');
-        })
-    });
     
-    res.render('principal',{listhomes});
-})
+    db.collection('houses').where('owner','==',usernameGlobal).get().then((snapshot, lisdt) => {
+        var array = [];
+        snapshot.docs.forEach(doc => {
+            var datos = doc.data();
+            const desc = {
+                nameHouse: datos.nameHouse,
+                direction: datos.direction
+            }
+            array.push(desc);
+            //console.log(datos);
+        })
+        
+        res.render('principal',{listhomes : array});
+    });
+});
+
 
 //----------
 
