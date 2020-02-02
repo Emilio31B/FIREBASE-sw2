@@ -4,12 +4,12 @@
             <div class="card">
                 <div class="card-body">
                     <div class="card">
-                        <form action="/addHome" method="POST">
+                        <form action="/editHouse/{{editHouse.id}}/{{editHouse.nameHouse}}/{{editHouse.direction}}" method="POST">
                             <div class="form-group">
-                                <input type="text" class="form-control" name="nameHouse" placeholder="Nombre de hogar" autofocus>
+                                <input type="text" class="form-control" value="{{editHouse.nameHouse}}" name="nameHouse" placeholder="Nombre de hogar" autofocus>
                             </div>
                             <div class="form-group">
-                                <input type="text" name="direction" class="form-control" placeholder="Dirección del hogar">
+                                <input type="text" name="direction" value="{{editHouse.direction}}" class="form-control" placeholder="Dirección del hogar">
                             </div>
                             <div class="form-group">
                                 <button class="btn btn-success btn-block">

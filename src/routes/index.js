@@ -100,9 +100,68 @@ router.post('/addHome', (req,res) => {
     db.collection('houses').add(newHome);
     res.redirect('/principal');   
 });
+//-----------------
+router.get('/delete/:nameHouse', (req, res) =>{
+    const { nameHouse } = req.params;
+    db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
+        snapshot.docs.forEach(doc => {
+            db.collection('houses').doc(doc.id).delete();
+        })
+    });
+    res.render('principal');
+});
+//---------------------
+/*router.get('/edit/:nameHouse/:direction', (req, res) =>{
+    const { nameHouse, direction } = req.params;
+    
+    //var IDedit;
+    var toEdit;
+    db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
+        snapshot.docs.forEach( doc => {
+            toEdit = {
+                id: doc.id,
+                nameHouse: nameHouse,
+                direction: direction
+            }
+            console.log(toEdit);
+            //res.render('editHouse', {editHouse: toEdit});
+        })
+    });
+    res.render('editHouse', {editHouse: toEdit});
+    
+});*/
+router.get('/edit/:nameHouse', (req, res) =>{
+    const { nameHouse } = req.params;
+    
+    //var IDedit;
+    
+    db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
+        var array = [];
+        snapshot.docs.forEach( doc => {
+            var id = doc.id;
+            var datos = doc.data();
+            var toEdit = {
+                id: id,
+                nameHouse: datos.nameHouse,
+                direction: datos.direction
+            }
+            array.push(toEdit);
+            //console.log(array);
+            //res.render('editHouse', {editHouse: toEdit});
+        })
+        res.render('editHouse', {editHouse: array[0]});
+    });  
+});
 
 
-
+router.post('/editHouse/:id/:nameHouse/:direction', (req, res)=> {
+    const { id, nameHouse, direction } = req.params;
+    /*db.collection('houses').doc(id).update({
+        nameHouse: nameHouse,
+        direction: direction
+    });*/
+    res.redirect('/principal');
+});
 
 //-------
 
