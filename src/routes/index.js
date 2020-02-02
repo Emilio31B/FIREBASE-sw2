@@ -108,7 +108,7 @@ router.get('/delete/:nameHouse', (req, res) =>{
             db.collection('houses').doc(doc.id).delete();
         })
     });
-    res.render('principal');
+    res.redirect('/principal');
 });
 //---------------------
 /*router.get('/edit/:nameHouse/:direction', (req, res) =>{
