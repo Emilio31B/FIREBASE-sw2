@@ -4,6 +4,7 @@ const router = Router();
 //-----------------------------------------------
 const admin = require('firebase-admin');
 
+
 var serviceAccount = require("../../firestore-sw2-firebase-adminsdk-vidyq-f6edb114a6");
 
 
@@ -154,12 +155,33 @@ router.get('/edit/:nameHouse', (req, res) =>{
 });
 
 
-router.post('/editHouse/:id/:nameHouse/:direction', (req, res)=> {
-    const { id, nameHouse, direction } = req.params;
+//router.post('/editHouse/:id/:nameHouse/:direction', (req, res)=> {
+router.post('/editHouse', (req, res)=> {
+    //const { id, nameHouse, direction } = req.params;
+    //const { id } = req.params;
+    const id = req.body.id;
+    //instalar body-parser
+    //console.log("el id: ",id);
+    //console.log("el name: ",nameHouse);
+    //console.log("el direct: ",direction);
     /*db.collection('houses').doc(id).update({
         nameHouse: nameHouse,
         direction: direction
+    }).then( function(){
+        console.log("updated");
+    }).catch(function(error){
+        console.error("error: ", error);
     });*/
+    console.log(req.body.nameHouse);
+    console.log(req.body.direction);
+    db.collection('houses').doc(id).update({
+        nameHouse: req.body.nameHouse,
+        direction: req.body.direction
+    }).then( function(){
+        console.log("updated");
+    }).catch(function(error){
+        console.error("error: ", error);
+    });
     res.redirect('/principal');
 });
 
