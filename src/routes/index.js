@@ -185,6 +185,46 @@ router.post('/editHouse', (req, res)=> {
     res.redirect('/principal');
 });
 
+//-------List Rooms
+router.get('/listRooms/:nameHouse', (req, res) => {
+    const { nameHouse } = req.params;
+    //const idHouse;
+    db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
+        var array = [];
+        snapshot.docs.forEach( doc => {
+            var id = doc.id;
+            array.push(id);
+        })
+        db.collection('room').where('idHouse','==',array[0]).get().then((snapshot) => {
+            var array = [];
+            snapshot.docs.forEach(doc => {
+                var datos = doc.data();
+                const desc = {
+                    idHouse: array[0],
+                    nameRoom: datos.nameRoom
+                }
+                array.push(desc);
+                //console.log(datos);
+            })
+            res.render('listRooms',{listrooms : array});
+        });
+    });
+    //console.log(idHouse);
+    /*db.collection('room').where('idHouse','==',).get().then((snapshot) => {
+        var array = [];
+        snapshot.docs.forEach(doc => {
+            var datos = doc.data();
+            const desc = {
+                idHouse: array[0],
+                nameRoom: datos.nameRoom
+            }
+            array.push(desc);
+            //console.log(datos);
+        })
+        res.render('listRooms',{listrooms : array});
+    });*/
+});
+
 //-------
 
 router.get('/logOut', (req, res) => {
