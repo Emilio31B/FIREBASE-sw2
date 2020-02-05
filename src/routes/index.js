@@ -190,12 +190,12 @@ router.get('/listRooms/:nameHouse', (req, res) => {
     const { nameHouse } = req.params;
     //const idHouse;
     db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
-        var array = [];
+        var array1 = [];
         snapshot.docs.forEach( doc => {
             var id = doc.id;
-            array.push(id);
+            array1.push(id);
         })
-        db.collection('room').where('idHouse','==',array[0]).get().then((snapshot) => {
+        db.collection('room').where('idHouse','==',array1[0]).get().then((snapshot) => {
             var array = [];
             snapshot.docs.forEach(doc => {
                 var datos = doc.data();
@@ -206,7 +206,7 @@ router.get('/listRooms/:nameHouse', (req, res) => {
                 array.push(desc);
                 //console.log(datos);
             })
-            res.render('listRooms',{listrooms : array});
+            res.render('listRooms',{listrooms : array, idHouse: array1[0]});
         });
     });
     //console.log(idHouse);
@@ -225,7 +225,49 @@ router.get('/listRooms/:nameHouse', (req, res) => {
     });*/
 });
 
-//-------
+//-------Add rooms
+router.get('/addRoom/:idHouse',(req, res)=>{
+    const { idHouse } = req.params;
+    const x = {
+        idHouse: idHouse
+    }
+    var array = [];
+    array.push(x);
+    res.render('addRoom',{infroom : array[0]});
+});
+router.post('/addRoom',(req, res) => {
+    const newRoom = {
+        nameRoom: req.body.nameRoom,
+        idHouse: req.body.idHouse
+    };
+    db.collection('room').add(newRoom);
+    var namehouse;
+    db.collection('houses').doc(req.body.idHouse).get().then( doc => {
+        const data = doc.data();
+        namehouse = data.nameHouse;
+        var url = '/listRooms/'+namehouse;
+        res.redirect(url); 
+    })
+    
+});
+//-----Delete room
+router.get('/deleteRoom/:nameRoom',(req, res) => {
+    const { nameRoom } = req.params;
+    db.collection('room').where('nameRoom','==',nameRoom).get().then((snapshot) =>{
+        var url;
+        snapshot.docs.forEach(doc => {
+            db.collection('houses').doc(doc.data().idHouse).get().then( doc1 => {
+                const data = doc1.data();
+                namehouse = data.nameHouse;
+                url = '/listRooms/'+namehouse;
+                db.collection('room').doc(doc.id).delete();
+                res.redirect(url); 
+            })
+            
+        })
+    });
+});
+//----
 
 router.get('/logOut', (req, res) => {
     res.render('signIn');

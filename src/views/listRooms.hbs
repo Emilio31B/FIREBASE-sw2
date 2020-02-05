@@ -1,8 +1,7 @@
 <div class="row">
     <div class="col-md-6">
-        
-        <a href="" class="btn btn-secondary">Agregar Habitación</a>
-        </div>
+        <a href="/addRoom/{{idHouse}}" class="btn btn-secondary">Agregar Habitación</a>
+    </div>
     <div class="col-md-6 pull-right">    
         <a href="/logOut" class="btn btn-secondary ">Cerrar Sesión</a>       
     </div>
@@ -19,12 +18,12 @@
             <div class="col-md-3">
                 <div class="card tetx-center">
                     <div class="card-body">
-                        <a href="" target="_blank">
+                        <a href="">
                             <h3 class="card-title text-uppercase">
                                 {{nameRoom}}
                             </h3>
                         </a>
-                        <a href="" class="btn btn-danger">Borrar</a>
+                        <a href="/deleteRoom/{{nameRoom}}" class="btn btn-danger">Borrar</a>
                         <!--<a href="/edit/{{nameHouse}}/{{direction}}" class="btn btn-secondary">Editar</a>-->
                         <a href="" class="btn btn-secondary">Editar</a>
                     </div>
