@@ -108,8 +108,9 @@ router.get('/delete/:nameHouse', (req, res) =>{
         snapshot.docs.forEach(doc => {
             db.collection('houses').doc(doc.id).delete();
         })
+        res.redirect('/principal');
     });
-    res.redirect('/principal');
+    //res.redirect('/principal');
 });
 //---------------------
 /*router.get('/edit/:nameHouse/:direction', (req, res) =>{
@@ -268,7 +269,40 @@ router.get('/deleteRoom/:nameRoom',(req, res) => {
     });
 });
 //----
+router.get('/editRoom/:nameRoom',(req, res) =>{
+    const { nameRoom } = req.params;
+    db.collection('room').where('nameRoom','==',nameRoom).get().then((snapshot) =>{
+        var array = [];
+        snapshot.docs.forEach( doc => {
+            var id = doc.id;
+            var datos = doc.data();
+            var toEdit = {
+                id: id,
+                nameRoom: datos.nameRoom
+            }
+            array.push(toEdit);
+            //console.log(array);
+            //res.render('editHouse', {editHouse: toEdit});
+        })
+        res.render('editRoom', {editRoom: array[0]});
+    });
+});
 
+router.post('/editRoom', (req, res)=>{
+    db.collection('room').doc(req.body.id).get().then( doc =>{
+        var url;
+        db.collection('houses').doc(doc.data().idHouse).get().then( doc1 => {
+            const data = doc1.data();
+            namehouse = data.nameHouse;
+            url = '/listRooms/'+namehouse;
+            db.collection('room').doc(req.body.id).update({
+                nameRoom: req.body.nameRoom
+            });
+            res.redirect(url); 
+            })
+    });
+});
+//----
 router.get('/logOut', (req, res) => {
     res.render('signIn');
 });
@@ -277,4 +311,3 @@ router.get('/logOut', (req, res) => {
 //-------
 
 module.exports = router;
-
