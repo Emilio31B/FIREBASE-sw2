@@ -303,11 +303,124 @@ router.post('/editRoom', (req, res)=>{
     });
 });
 //----
-router.get('/logOut', (req, res) => {
-    res.render('signIn');
+router.get('/listSensors/:nameRoom', (req, res) =>{
+    const {nameRoom} = req.params;
+    console.log(nameRoom);
+    db.collection('room').where('nameRoom','==',nameRoom).get().then((snapshot) =>{
+        var array1 = [];
+        snapshot.docs.forEach( doc => {
+            var id = doc.id;
+            array1.push(id);
+        })
+        db.collection('sensor').where('idRoom','==',array1[0]).get().then((snapshot) => {
+            var array = [];
+            snapshot.docs.forEach(doc => {
+                var datos = doc.data();
+                const desc = {
+                    idRoom: array[0],
+                    nameSensor: datos.nameSensor,
+                    unit: datos.unit
+                }
+                array.push(desc);
+                //console.log(datos);
+            })
+            res.render('listSensors',{listsensors : array, idRoom: array1[0]});
+        });
+    });
+});
+//----
+router.get('/addSensor/:idRoom', (req, res) => {
+    const { idRoom } = req.params;
+    const x = {
+        idRoom: idRoom
+    }
+    var array = [];
+    array.push(x);
+    res.render('addSensor',{infsensor : array[0]});
 });
 
 
-//-------
+router.post('/addSensor', (req, res) => {
+    console.log('idroom: ',req.body.idRoom);
+    console.log('codesensor: ',req.body.codeSensor);
+    db.collection('hwsensor').doc(req.body.codeSensor).get().then( doc1 => {
+        if(doc1.exists){
+            const sensor = {
+                idRoom: req.body.idRoom,
+                nameSensor: doc1.data().nameSensor,
+                unit: doc1.data().unit
+            }
+            db.collection('sensor').add(sensor);
+            var nameRoom;
+            db.collection('room').doc(req.body.idRoom).get().then( doc => {
+                const data = doc.data();
+                nameRoom = data.nameRoom;
+                var url = '/listSensors/'+nameRoom;
+                res.redirect(url); 
+            })
+        } else{
+            var url2 = '/addSensor/' + req.body.idRoom;
+            res.redirect(url2);
+        }
+        
+    })
+})
 
+//-----
+router.get('/deleteSensor/:nameSensor', (req, res) =>{
+    const { nameSensor } = req.params;
+    db.collection('sensor').where('nameSensor','==',nameSensor).get().then((snapshot) =>{
+        var url;
+        snapshot.docs.forEach(doc => {
+            db.collection('room').doc(doc.data().idRoom).get().then( doc1 => {
+                const data = doc1.data();
+                nameRoom = data.nameRoom;
+                url = '/listSensors/'+nameRoom;
+                db.collection('sensor').doc(doc.id).delete();
+                res.redirect(url); 
+            })
+            
+        })
+    });
+});
+//----
+router.get('/editUnit/:nameSensor',(req, res) => {
+    const { nameSensor } = req.params;
+    db.collection('sensor').where('nameSensor','==',nameSensor).get().then((snapshot) =>{
+        var array = [];
+        snapshot.docs.forEach( doc => {
+            var id = doc.id;
+            var datos = doc.data();
+            var toEdit = {
+                id: id,
+                unit: datos.unit
+            }
+            array.push(toEdit);
+            console.log(array);
+            //res.render('editHouse', {editHouse: toEdit});
+        })
+        res.render('editUnitSensor', {editUnitSensor: array[0]});
+    });
+});
+
+router.post('/editUnitSensor',(req, res) => {
+    console.log('cuerpo: ',req.body.newUnit);
+    db.collection('sensor').doc(req.body.id).get().then( doc =>{
+        var url;
+        db.collection('room').doc(doc.data().idRoom).get().then( doc1 => {
+            const data = doc1.data();
+            nameRoom = data.nameRoom;
+            url = '/listSensors/'+nameRoom;
+            db.collection('sensor').doc(req.body.id).update({
+                unit: req.body.newUnit
+            });
+            res.redirect(url); 
+            })
+    });
+});
+//---
+router.get('/logOut', (req, res) => {
+    res.render('signIn');
+});
+//-------
 module.exports = router;
