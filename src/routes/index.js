@@ -4,6 +4,9 @@ const router = Router();
 //-----------------------------------------------
 const admin = require('firebase-admin');
 
+const firebase = require("firebase");
+
+var firebaseConfig = require("../../firebaseConfig");
 
 var serviceAccount = require("../../firestore-sw2-firebase-adminsdk-vidyq-f6edb114a6");
 
@@ -13,42 +16,67 @@ admin.initializeApp({
     databaseURL: 'https://firestore-sw2.firebaseio.com'
 });
 
-const db = admin.firestore();
-var usernameGlobal = null;
+firebase.initializeApp(firebaseConfig);
+firebase.auth().onAuthStateChanged((user) => {
+    if (user == null) {
+        console.log(user)
+    } else {
+        console.log(user.uid)
+    }
+})
 
-router.get('/',(req,res) => {
+const db = admin.firestore();
+
+router.get('/', (req, res) => {
     res.render('index');
 });
 
-router.get('/signIn',(req,res) =>{
+router.get('/signIn', (req, res) => {
     res.render('signIn');;
 });
 
-router.post('/validated', (req ,res) => {
+router.post('/validated', (req, res) => {
     var username = req.body.username;
     const password = req.body.password;
-    db.collection('users').where('username','==',username).get().then((snapshot) =>{
-        if(snapshot.empty){
-            res.render('signIn');
-        }else{
-            snapshot.docs.forEach(doc => {
-                const pss = doc.data().password;
-                usernameGlobal = username;
-                if(password === pss){
-                    //res.render('principal');
-                    res.redirect('/principal');
-                }else{
-                    res.render('signIn');
-                }               
-            });
-        }             
-    })
-    
-    
+
+    db.collection('users').where('username', '==', username).get()
+        .then((snapshot) => {
+            if (snapshot.empty) {
+                res.render('signIn', { error: "Usuario o contraseña inválido" })
+            } else {
+                snapshot.docs.forEach(doc => {
+                    const email = doc.data().email;
+                    firebase.auth().signInWithEmailAndPassword(email, password)
+                        .then(() => {
+                            res.redirect('/principal');
+                        })
+                        .catch(err => {
+                            console.log(err.message);
+                            res.render('signIn', { error: "Usuario o contraseña inválido" })
+                        });
+                });
+            }
+        });
+});
+//-----------Change pass-----------------
+router.get('/changepass', (req, res) => {
+    res.render('changepass');
+});
+router.post('/changepass', (req, res) => {
+    let email = req.body.email;
+    console.log("EMAIL: ", email);
+    firebase.auth().sendPasswordResetEmail(email).then(function () {
+        // Email sent.
+        console.log("Email enviado")
+    }).catch(function (error) {
+        console.log(error)
+        // An error happened.
+    });
+    res.redirect('signIn');
 });
 //---------------------------------------
 
-router.get('/signUp',(req,res) => {
+router.get('/signUp', (req, res) => {
     res.render('signUp');
 })
 
@@ -58,17 +86,21 @@ router.post('/newUser', (req, res) => {
         firstname: req.body.name,
         email: req.body.email,
         username: req.body.username,
-        password: req.body.password
     };
-    db.collection('users').add(newUser);
-    res.render('signIn');
+
+    firebase.auth().createUserWithEmailAndPassword(req.body.email, req.body.password)
+        .then((userDetails) => {
+            console.log(userDetails.user.uid);
+            db.collection("users").doc(userDetails.user.uid).set(newUser);
+            res.render('signIn');
+        })
+        .catch(err => console.log(err));
 });
 
 
 //--------
 router.get('/principal', (req, res) => {
-    
-    db.collection('houses').where('owner','==',usernameGlobal).get().then((snapshot, lisdt) => {
+    db.collection('houses').where('owner', '==', firebase.auth().currentUser.uid).get().then((snapshot, lisdt) => {
         var array = [];
         snapshot.docs.forEach(doc => {
             var datos = doc.data();
@@ -79,8 +111,8 @@ router.get('/principal', (req, res) => {
             array.push(desc);
             //console.log(datos);
         })
-        
-        res.render('principal',{listhomes : array});
+        let uid = firebase.auth().currentUser.uid;
+        res.render('principal', { listhomes: array, userUID: uid });
     });
 });
 
@@ -92,19 +124,19 @@ router.get('/addHome', (req, res) => {
 });
 
 
-router.post('/addHome', (req,res) => {
+router.post('/addHome', (req, res) => {
     const newHome = {
         nameHouse: req.body.nameHouse,
         direction: req.body.direction,
-        owner: usernameGlobal
+        owner: firebase.auth().currentUser.uid
     };
     db.collection('houses').add(newHome);
-    res.redirect('/principal');   
+    res.redirect('/principal');
 });
 //-----------------
-router.get('/delete/:nameHouse', (req, res) =>{
+router.get('/delete/:nameHouse', (req, res) => {
     const { nameHouse } = req.params;
-    db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
+    db.collection('houses').where('nameHouse', '==', nameHouse).get().then((snapshot) => {
         snapshot.docs.forEach(doc => {
             db.collection('houses').doc(doc.id).delete();
         })
@@ -132,14 +164,14 @@ router.get('/delete/:nameHouse', (req, res) =>{
     res.render('editHouse', {editHouse: toEdit});
     
 });*/
-router.get('/edit/:nameHouse', (req, res) =>{
+router.get('/edit/:nameHouse', (req, res) => {
     const { nameHouse } = req.params;
-    
+
     //var IDedit;
-    
-    db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
+
+    db.collection('houses').where('nameHouse', '==', nameHouse).get().then((snapshot) => {
         var array = [];
-        snapshot.docs.forEach( doc => {
+        snapshot.docs.forEach(doc => {
             var id = doc.id;
             var datos = doc.data();
             var toEdit = {
@@ -151,13 +183,13 @@ router.get('/edit/:nameHouse', (req, res) =>{
             //console.log(array);
             //res.render('editHouse', {editHouse: toEdit});
         })
-        res.render('editHouse', {editHouse: array[0]});
-    });  
+        res.render('editHouse', { editHouse: array[0] });
+    });
 });
 
 
 //router.post('/editHouse/:id/:nameHouse/:direction', (req, res)=> {
-router.post('/editHouse', (req, res)=> {
+router.post('/editHouse', (req, res) => {
     //const { id, nameHouse, direction } = req.params;
     //const { id } = req.params;
     const id = req.body.id;
@@ -178,9 +210,9 @@ router.post('/editHouse', (req, res)=> {
     db.collection('houses').doc(id).update({
         nameHouse: req.body.nameHouse,
         direction: req.body.direction
-    }).then( function(){
+    }).then(function () {
         console.log("updated");
-    }).catch(function(error){
+    }).catch(function (error) {
         console.error("error: ", error);
     });
     res.redirect('/principal');
@@ -190,13 +222,13 @@ router.post('/editHouse', (req, res)=> {
 router.get('/listRooms/:nameHouse', (req, res) => {
     const { nameHouse } = req.params;
     //const idHouse;
-    db.collection('houses').where('nameHouse','==',nameHouse).get().then((snapshot) =>{
+    db.collection('houses').where('nameHouse', '==', nameHouse).get().then((snapshot) => {
         var array1 = [];
-        snapshot.docs.forEach( doc => {
+        snapshot.docs.forEach(doc => {
             var id = doc.id;
             array1.push(id);
         })
-        db.collection('room').where('idHouse','==',array1[0]).get().then((snapshot) => {
+        db.collection('room').where('idHouse', '==', array1[0]).get().then((snapshot) => {
             var array = [];
             snapshot.docs.forEach(doc => {
                 var datos = doc.data();
@@ -207,7 +239,7 @@ router.get('/listRooms/:nameHouse', (req, res) => {
                 array.push(desc);
                 //console.log(datos);
             })
-            res.render('listRooms',{listrooms : array, idHouse: array1[0]});
+            res.render('listRooms', { listrooms: array, idHouse: array1[0] });
         });
     });
     //console.log(idHouse);
@@ -227,53 +259,53 @@ router.get('/listRooms/:nameHouse', (req, res) => {
 });
 
 //-------Add rooms
-router.get('/addRoom/:idHouse',(req, res)=>{
+router.get('/addRoom/:idHouse', (req, res) => {
     const { idHouse } = req.params;
     const x = {
         idHouse: idHouse
     }
     var array = [];
     array.push(x);
-    res.render('addRoom',{infroom : array[0]});
+    res.render('addRoom', { infroom: array[0] });
 });
-router.post('/addRoom',(req, res) => {
+router.post('/addRoom', (req, res) => {
     const newRoom = {
         nameRoom: req.body.nameRoom,
         idHouse: req.body.idHouse
     };
     db.collection('room').add(newRoom);
     var namehouse;
-    db.collection('houses').doc(req.body.idHouse).get().then( doc => {
+    db.collection('houses').doc(req.body.idHouse).get().then(doc => {
         const data = doc.data();
         namehouse = data.nameHouse;
-        var url = '/listRooms/'+namehouse;
-        res.redirect(url); 
+        var url = '/listRooms/' + namehouse;
+        res.redirect(url);
     })
-    
+
 });
 //-----Delete room
-router.get('/deleteRoom/:nameRoom',(req, res) => {
+router.get('/deleteRoom/:nameRoom', (req, res) => {
     const { nameRoom } = req.params;
-    db.collection('room').where('nameRoom','==',nameRoom).get().then((snapshot) =>{
+    db.collection('room').where('nameRoom', '==', nameRoom).get().then((snapshot) => {
         var url;
         snapshot.docs.forEach(doc => {
-            db.collection('houses').doc(doc.data().idHouse).get().then( doc1 => {
+            db.collection('houses').doc(doc.data().idHouse).get().then(doc1 => {
                 const data = doc1.data();
                 namehouse = data.nameHouse;
-                url = '/listRooms/'+namehouse;
+                url = '/listRooms/' + namehouse;
                 db.collection('room').doc(doc.id).delete();
-                res.redirect(url); 
+                res.redirect(url);
             })
-            
+
         })
     });
 });
 //----
-router.get('/editRoom/:nameRoom',(req, res) =>{
+router.get('/editRoom/:nameRoom', (req, res) => {
     const { nameRoom } = req.params;
-    db.collection('room').where('nameRoom','==',nameRoom).get().then((snapshot) =>{
+    db.collection('room').where('nameRoom', '==', nameRoom).get().then((snapshot) => {
         var array = [];
-        snapshot.docs.forEach( doc => {
+        snapshot.docs.forEach(doc => {
             var id = doc.id;
             var datos = doc.data();
             var toEdit = {
@@ -284,50 +316,122 @@ router.get('/editRoom/:nameRoom',(req, res) =>{
             //console.log(array);
             //res.render('editHouse', {editHouse: toEdit});
         })
-        res.render('editRoom', {editRoom: array[0]});
+        res.render('editRoom', { editRoom: array[0] });
     });
 });
 
-router.post('/editRoom', (req, res)=>{
-    db.collection('room').doc(req.body.id).get().then( doc =>{
+router.post('/editRoom', (req, res) => {
+    db.collection('room').doc(req.body.id).get().then(doc => {
         var url;
-        db.collection('houses').doc(doc.data().idHouse).get().then( doc1 => {
+        db.collection('houses').doc(doc.data().idHouse).get().then(doc1 => {
             const data = doc1.data();
             namehouse = data.nameHouse;
-            url = '/listRooms/'+namehouse;
+            url = '/listRooms/' + namehouse;
             db.collection('room').doc(req.body.id).update({
                 nameRoom: req.body.nameRoom
             });
-            res.redirect(url); 
-            })
+            res.redirect(url);
+        })
     });
 });
 //----
-router.get('/listSensors/:nameRoom', (req, res) =>{
-    const {nameRoom} = req.params;
-    console.log(nameRoom);
-    db.collection('room').where('nameRoom','==',nameRoom).get().then((snapshot) =>{
-        var array1 = [];
-        snapshot.docs.forEach( doc => {
-            var id = doc.id;
-            array1.push(id);
+router.get('/listSensors/:nameRoom', (req, res) => {
+    const { nameRoom } = req.params;
+    let idRoom = "";
+
+    db.collection('room').where('nameRoom', '==', nameRoom)
+        .limit(1)
+        .get()
+        .then((snapshot) => {
+            idRoom = snapshot.docs[0].id;
+            return db.collection('sensor').where('idRoom', '==', idRoom).get();
         })
-        db.collection('sensor').where('idRoom','==',array1[0]).get().then((snapshot) => {
-            var array = [];
+        .then((snapshot) => {
+            let aPromises = [];
             snapshot.docs.forEach(doc => {
-                var datos = doc.data();
+                let idhwsensor = doc.data().idhwsensor;
+                aPromises.push(db.collection('hwsensor').doc(idhwsensor).get());
+            });
+            return Promise.all(aPromises);
+        })
+        .then((snapshots) => {
+            let listsensors = [];
+            snapshots.forEach((snapshot) => {
                 const desc = {
-                    idRoom: array[0],
-                    nameSensor: datos.nameSensor,
-                    unit: datos.unit
-                }
-                array.push(desc);
-                //console.log(datos);
-            })
-            res.render('listSensors',{listsensors : array, idRoom: array1[0]});
+                    idRoom: idRoom,
+                    nameSensor: snapshot.data().nameSensor,
+                    unit: snapshot.data().unit
+                };
+                listsensors.push(desc);
+                console.log(snapshot.data());
+            });
+            res.render('listSensors', { listsensors: listsensors, idRoom: idRoom });
         });
-    });
 });
+
+//    // db.collection('hwsensor').doc(doc.data().idhwsensor).get().then( (snapshot1) => {});
+//     snapshot1.docs.forEach( doc1 => {
+//         const data = doc1.data();
+//         const desc = {
+//             idRoom : array1[0],
+//             nameSensor : data.nameSensor,
+//             unit : data.unit
+//         };    
+//         array.push(desc);
+// });
+//  res.render('listSensors',{listsensors : array, idRoom: array1[0]});
+
+
+
+
+// db.collection('room').where('nameRoom','==',nameRoom).get().then((snapshot) =>{
+//     var array1 = [];
+//     snapshot.docs.forEach( doc => {
+//         var id = doc.id;
+//         array1.push(id);
+//     })
+//     db.collection('sensor').where('idRoom','==',array1[0]).get().then((snapshot) => {
+//         //var array = [];
+//         snapshot.docs.forEach(doc => {
+//             //var datos = doc.data();
+
+//             /*const desc = {
+//                 idRoom: array1[0],
+//                 nameSensor: datos.nameSensor,
+//                 unit: datos.unit
+//             }*/
+
+//            //...
+//             db.collection('hwsensor').doc(doc.id).get().then( (snapshot) => {
+//                 //doc1 => {
+//                     var array = [];
+//                     snapshot.docs.forEach( doc1 => {
+//                         const data = doc1.data();
+//                         const desc = {
+//                             idRoom : array1[0],
+//                             nameSensor : data.nameSensor,
+//                             unit : data.unit
+//                         };    
+//                         array.push(desc);
+//                     })
+//                     res.render('listSensors',{listsensors : array, idRoom: array1[0]});
+
+//                 console.log("arreglo prueba",array);
+
+//             })
+
+
+
+//             //...
+//             //console.log("data desc: ",desc);
+//             //array.push(desc);
+
+//         })
+//         //res.render('listSensors',{listsensors : array, idRoom: array1[0]});
+//     });
+// });
+
+
 //----
 router.get('/addSensor/:idRoom', (req, res) => {
     const { idRoom } = req.params;
@@ -336,59 +440,64 @@ router.get('/addSensor/:idRoom', (req, res) => {
     }
     var array = [];
     array.push(x);
-    res.render('addSensor',{infsensor : array[0]});
+    res.render('addSensor', { infsensor: array[0] });
 });
 
 
 router.post('/addSensor', (req, res) => {
-    console.log('idroom: ',req.body.idRoom);
-    console.log('codesensor: ',req.body.codeSensor);
-    db.collection('hwsensor').doc(req.body.codeSensor).get().then( doc1 => {
-        if(doc1.exists){
+    //console.log('idroom: ', req.body.idRoom);
+    //console.log('codesensor: ', req.body.codeSensor);
+    db.collection('hwsensor').doc(req.body.codeSensor).get().then(doc1 => {
+        if (doc1.exists) {
+            /*
             const sensor = {
                 idRoom: req.body.idRoom,
                 nameSensor: doc1.data().nameSensor,
                 unit: doc1.data().unit
-            }
+            }*/
+            const sensor = {
+                idRoom: req.body.idRoom,
+                idhwsensor: doc1.id
+            };
             db.collection('sensor').add(sensor);
             var nameRoom;
-            db.collection('room').doc(req.body.idRoom).get().then( doc => {
+            db.collection('room').doc(req.body.idRoom).get().then(doc => {
                 const data = doc.data();
                 nameRoom = data.nameRoom;
-                var url = '/listSensors/'+nameRoom;
-                res.redirect(url); 
+                var url = '/listSensors/' + nameRoom;
+                res.redirect(url);
             })
-        } else{
+        } else {
             var url2 = '/addSensor/' + req.body.idRoom;
             res.redirect(url2);
         }
-        
+
     })
 })
 
 //-----
-router.get('/deleteSensor/:nameSensor', (req, res) =>{
+router.get('/deleteSensor/:nameSensor', (req, res) => {
     const { nameSensor } = req.params;
-    db.collection('sensor').where('nameSensor','==',nameSensor).get().then((snapshot) =>{
+    db.collection('sensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
         var url;
         snapshot.docs.forEach(doc => {
-            db.collection('room').doc(doc.data().idRoom).get().then( doc1 => {
+            db.collection('room').doc(doc.data().idRoom).get().then(doc1 => {
                 const data = doc1.data();
                 nameRoom = data.nameRoom;
-                url = '/listSensors/'+nameRoom;
+                url = '/listSensors/' + nameRoom;
                 db.collection('sensor').doc(doc.id).delete();
-                res.redirect(url); 
+                res.redirect(url);
             })
-            
+
         })
     });
 });
 //----
-router.get('/editUnit/:nameSensor',(req, res) => {
+router.get('/editUnit/:nameSensor', (req, res) => {
     const { nameSensor } = req.params;
-    db.collection('sensor').where('nameSensor','==',nameSensor).get().then((snapshot) =>{
+    db.collection('sensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
         var array = [];
-        snapshot.docs.forEach( doc => {
+        snapshot.docs.forEach(doc => {
             var id = doc.id;
             var datos = doc.data();
             var toEdit = {
@@ -399,28 +508,33 @@ router.get('/editUnit/:nameSensor',(req, res) => {
             console.log(array);
             //res.render('editHouse', {editHouse: toEdit});
         })
-        res.render('editUnitSensor', {editUnitSensor: array[0]});
+        res.render('editUnitSensor', { editUnitSensor: array[0] });
     });
 });
 
-router.post('/editUnitSensor',(req, res) => {
-    console.log('cuerpo: ',req.body.newUnit);
-    db.collection('sensor').doc(req.body.id).get().then( doc =>{
+router.post('/editUnitSensor', (req, res) => {
+    console.log('cuerpo: ', req.body.newUnit);
+    db.collection('sensor').doc(req.body.id).get().then(doc => {
         var url;
-        db.collection('room').doc(doc.data().idRoom).get().then( doc1 => {
+        db.collection('room').doc(doc.data().idRoom).get().then(doc1 => {
             const data = doc1.data();
             nameRoom = data.nameRoom;
-            url = '/listSensors/'+nameRoom;
+            url = '/listSensors/' + nameRoom;
             db.collection('sensor').doc(req.body.id).update({
                 unit: req.body.newUnit
             });
-            res.redirect(url); 
-            })
+            res.redirect(url);
+        })
     });
+
 });
 //---
 router.get('/logOut', (req, res) => {
-    res.render('signIn');
+    firebase.auth().signOut()
+        .then(() => {
+            res.render('signIn');
+        });
+
 });
 //-------
 module.exports = router;
