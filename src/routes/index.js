@@ -478,6 +478,7 @@ router.post('/addSensor', (req, res) => {
 //-----
 router.get('/deleteSensor/:nameSensor', (req, res) => {
     const { nameSensor } = req.params;
+    /* 
     db.collection('sensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
         var url;
         snapshot.docs.forEach(doc => {
@@ -491,6 +492,29 @@ router.get('/deleteSensor/:nameSensor', (req, res) => {
 
         })
     });
+    */
+   //-----
+    db.collection('hwsensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
+        var url;
+        snapshot.docs.forEach(doc => {
+            db.collection('sensor').doc('idhwsensor','==',doc.id).get().then(doc1 => {
+                const data = doc1.data();
+                //nameRoom = data.nameRoom;
+                db.collection('room').doc(data.idRoom).get().then((snapshot1) =>{
+                    snapshot1.docs.forEach( doc2 => {
+                        url = '/listSensors/' + doc2.nameRoom;
+                        db.collection('sensor').doc(doc1.id).delete();
+                        res.redirect(url);
+                    })
+                })
+                
+                
+                
+            })
+
+        })
+    });
+    //-----
 });
 //----
 router.get('/editUnit/:nameSensor', (req, res) => {
