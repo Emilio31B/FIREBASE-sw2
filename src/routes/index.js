@@ -497,29 +497,50 @@ router.get('/deleteSensor/:nameSensor', (req, res) => {
     db.collection('hwsensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
         var url;
         snapshot.docs.forEach(doc => {
-            db.collection('sensor').doc('idhwsensor','==',doc.id).get().then(doc1 => {
-                const data = doc1.data();
-                //nameRoom = data.nameRoom;
-                db.collection('room').doc(data.idRoom).get().then((snapshot1) =>{
-                    snapshot1.docs.forEach( doc2 => {
-                        url = '/listSensors/' + doc2.nameRoom;
-                        db.collection('sensor').doc(doc1.id).delete();
-                        res.redirect(url);
-                    })
+            db.collection('sensor').where('idhwsensor','==',doc.id).get().then((snapshot0) => {
+                snapshot0.docs.forEach( doc1 => {
+                    const data = doc1.data();
+                    console.log(data);
+                    db.collection('room').doc(data.idRoom).get().then(doc2 =>{
+        
+                            url = '/listSensors/' + doc2.data().nameRoom;
+                            console.log('doc2nameRoom: ',doc2.data().nameRoom);
+                            db.collection('sensor').doc(doc1.id).delete();
+                            res.redirect(url);
+                        })
+                         
+                    }) 
                 })
                 
+                //nameRoom = data.nameRoom;
                 
-                
+                //     
             })
 
         })
-    });
     //-----
 });
 //----
 router.get('/editUnit/:nameSensor', (req, res) => {
     const { nameSensor } = req.params;
+    /* 
     db.collection('sensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
+        var array = [];
+        snapshot.docs.forEach(doc => {
+            var id = doc.id;
+            var datos = doc.data();
+            var toEdit = {
+                id: id,
+                unit: datos.unit
+            }
+            array.push(toEdit);
+            console.log(array);
+            //res.render('editHouse', {editHouse: toEdit});
+        })
+        res.render('editUnitSensor', { editUnitSensor: array[0] });
+    });
+    */
+    db.collection('hwsensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
         var array = [];
         snapshot.docs.forEach(doc => {
             var id = doc.id;
