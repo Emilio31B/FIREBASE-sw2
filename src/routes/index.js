@@ -559,6 +559,7 @@ router.get('/editUnit/:nameSensor', (req, res) => {
 
 router.post('/editUnitSensor', (req, res) => {
     console.log('cuerpo: ', req.body.newUnit);
+    /*
     db.collection('sensor').doc(req.body.id).get().then(doc => {
         var url;
         db.collection('room').doc(doc.data().idRoom).get().then(doc1 => {
@@ -570,6 +571,25 @@ router.post('/editUnitSensor', (req, res) => {
             });
             res.redirect(url);
         })
+    });
+    */
+    db.collection('hwsensor').doc(req.body.id).get().then(doc => {
+        var url;
+        db.collection('sensor').where('idhwsensor','==',doc.id).get().then((snapshot) =>{
+            snapshot.docs.forEach(doc1 => {
+                const data = doc1.data();
+                db.collection('room').doc(data.idRoom).get().then( doc2 => {
+                    nameRoom = doc2.data().nameRoom;
+                    url = '/listSensors/' + nameRoom;
+                    db.collection('hwsensor').doc(req.body.id).update({
+                        unit: req.body.newUnit
+                    });
+                    res.redirect(url);
+                })
+                
+            })
+        })
+        
     });
 
 });
