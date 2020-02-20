@@ -94,7 +94,10 @@ router.post('/newUser', (req, res) => {
             db.collection("users").doc(userDetails.user.uid).set(newUser);
             res.render('signIn');
         })
-        .catch(err => console.log(err));
+        //.catch(err => console.log(err));
+        .catch(
+            err => res.render('signUp',{psserror : "Contraseña tiene que tener mas de 6 caracteres"})
+            );
 });
 
 
