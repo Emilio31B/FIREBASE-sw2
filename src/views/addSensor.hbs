@@ -5,6 +5,11 @@
                 <div class="card-body">
                     <div class="card">
                         <form action="/addSensor" method="POST">
+                            {{#if message}}
+                                <div class="alert alert-danger" role="alert">
+                                {{message}}
+                                </div>
+                            {{/if}}
                             <div class="form-group">
                                 <input type="text" class="form-control" name="codeSensor" placeholder="Código del sensor" autofocus>
                             </div>

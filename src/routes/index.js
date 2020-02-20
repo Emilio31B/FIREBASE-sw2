@@ -459,6 +459,7 @@ router.post('/addSensor', (req, res) => {
                 idRoom: req.body.idRoom,
                 idhwsensor: doc1.id
             };
+            console.log("----",sensor);
             db.collection('sensor').add(sensor);
             var nameRoom;
             db.collection('room').doc(req.body.idRoom).get().then(doc => {
@@ -478,6 +479,7 @@ router.post('/addSensor', (req, res) => {
 //-----
 router.get('/deleteSensor/:nameSensor', (req, res) => {
     const { nameSensor } = req.params;
+    console.log('namesensor: ',nameSensor);
     /* 
     db.collection('sensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
         var url;
@@ -497,12 +499,13 @@ router.get('/deleteSensor/:nameSensor', (req, res) => {
     db.collection('hwsensor').where('nameSensor', '==', nameSensor).get().then((snapshot) => {
         var url;
         snapshot.docs.forEach(doc => {
+            console.log("-- ",doc.id);
             db.collection('sensor').where('idhwsensor','==',doc.id).get().then((snapshot0) => {
                 snapshot0.docs.forEach( doc1 => {
                     const data = doc1.data();
                     console.log(data);
                     db.collection('room').doc(data.idRoom).get().then(doc2 =>{
-        
+                            console.log("---",doc2.data().nameRoom);
                             url = '/listSensors/' + doc2.data().nameRoom;
                             console.log('doc2nameRoom: ',doc2.data().nameRoom);
                             db.collection('sensor').doc(doc1.id).delete();
